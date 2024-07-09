@@ -10,7 +10,6 @@
 #define TRIGGER_PIN 33
 #define ECHO_PIN 32
 #define MAX_DISTANCE 400 // Distancia máxima a medir (en cm)
-
 // Bilbiotecas para influxDB
 #include <InfluxDbClient.h>
 #include <InfluxDbCloud.h>
@@ -23,6 +22,8 @@
 
 #define TZ_INFO "UTC-4"
 
+const int ledRED = 25;
+const int ledGREEN = 26;
 float datosTomados[10] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 Point sensor("wifi_status");
@@ -57,8 +58,30 @@ float getNivel(float dist)
   }
 }
 
+void prender(){
+  digitalWrite(ledRED, HIGH);
+  digitalWrite(ledGREEN, LOW);
+}
+void apagar(){
+  digitalWrite(ledRED, LOW);
+  digitalWrite(ledGREEN, HIGH);
+}
+
+void control(float nivel){
+  if (nivel <70.0){
+    prender();
+  }else{
+    apagar();
+  }
+
+
+}
+
 void setup()
 {
+  pinMode(ledRED, OUTPUT);
+  pinMode(ledGREEN, OUTPUT);
+
   Serial.begin(115200);
   Serial.println("Iniciando sensor ultrasonico HC-SR04...");
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -143,6 +166,7 @@ void loop()
     bubbleSort(datosTomados, 10);                // ordeno array
     mediana = calcularMediana(datosTomados, 10); // calculo la mediana
 
+    control(getNivel(mediana));
     Point sensorData("ultrasonic_sensor");
     sensorData.addTag("device", "ESP32");
     sensorData.addField("distance", mediana);
